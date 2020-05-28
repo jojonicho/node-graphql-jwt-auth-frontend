@@ -1,22 +1,38 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import { useRegisterMutation, useLoginMutation } from "../generated/graphql";
+import {
+  useRegisterMutation,
+  useLoginMutation,
+  MeDocument,
+  MeQuery,
+} from "../generated/graphql";
 import { RouteComponentProps } from "react-router-dom";
 import { setAccessToken } from "../accessToken";
 
 type FormData = {
-  username: string;
+  email: string;
   password: string;
 };
 
 export const Login: React.FC<RouteComponentProps> = ({ history }) => {
   const { register, setValue, handleSubmit, errors } = useForm<FormData>();
   const [login] = useLoginMutation();
-  const onSubmit = handleSubmit(async ({ username, password }) => {
+  const onSubmit = handleSubmit(async ({ email, password }) => {
     const response = await login({
       variables: {
-        username,
+        email,
         password,
+      },
+      // cache
+      update: (store, { data }) => {
+        if (!data) return null;
+        store.writeQuery<MeQuery>({
+          query: MeDocument,
+          data: {
+            __typename: "Query",
+            me: data.login.user,
+          },
+        });
       },
     });
     history.push("/");
@@ -27,9 +43,9 @@ export const Login: React.FC<RouteComponentProps> = ({ history }) => {
   });
   return (
     <form onSubmit={onSubmit}>
-      <label>username</label>
-      <input name="username" placeholder="username" ref={register} />
-      {errors.username && "username is required."}
+      <label>email</label>
+      <input name="email" placeholder="email" ref={register} />
+      {errors.email && "email is required."}
       <label>password</label>
       <input
         type="password"
