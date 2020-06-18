@@ -2,6 +2,7 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/react-common';
 import * as ApolloReactHooks from '@apollo/react-hooks';
 export type Maybe<T> = T | null;
+export type Exact<T extends { [key: string]: any }> = { [K in keyof T]: T[K] };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string;
@@ -9,13 +10,17 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  /** The javascript `Date` as string. Type represents date and time as the ISO Date string. */
+  DateTime: any;
 };
 
 export type Query = {
   __typename?: 'Query';
   hello: Scalars['String'];
-  me: User;
+  me?: Maybe<User>;
   users: Array<User>;
+  messages: Array<Message>;
+  message: Array<Message>;
 };
 
 export type User = {
@@ -25,6 +30,15 @@ export type User = {
   username: Scalars['String'];
 };
 
+export type Message = {
+  __typename?: 'Message';
+  id: Scalars['Int'];
+  user: User;
+  date: Scalars['DateTime'];
+  content: Scalars['String'];
+};
+
+
 export type Mutation = {
   __typename?: 'Mutation';
   register: Scalars['Boolean'];
@@ -32,6 +46,7 @@ export type Mutation = {
   revokeRefreshTokenUser: Scalars['Boolean'];
   login: LoginResponse;
   logout: Scalars['Boolean'];
+  sendMessage: Scalars['Boolean'];
 };
 
 
@@ -55,6 +70,11 @@ export type MutationLoginArgs = {
   email: Scalars['String'];
 };
 
+
+export type MutationSendMessageArgs = {
+  input: MessageInput;
+};
+
 export type RegisterInput = {
   email: Scalars['String'];
   username: Scalars['String'];
@@ -67,7 +87,31 @@ export type LoginResponse = {
   user: User;
 };
 
-export type HelloQueryVariables = {};
+export type MessageInput = {
+  content: Scalars['String'];
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  newMessage: Message;
+};
+
+export type ChatSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ChatSubscription = (
+  { __typename?: 'Subscription' }
+  & { newMessage: (
+    { __typename?: 'Message' }
+    & Pick<Message, 'date' | 'content'>
+    & { user: (
+      { __typename?: 'User' }
+      & Pick<User, 'username'>
+    ) }
+  ) }
+);
+
+export type HelloQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type HelloQuery = (
@@ -75,10 +119,10 @@ export type HelloQuery = (
   & Pick<Query, 'hello'>
 );
 
-export type LoginMutationVariables = {
+export type LoginMutationVariables = Exact<{
   email: Scalars['String'];
   password: Scalars['String'];
-};
+}>;
 
 
 export type LoginMutation = (
@@ -93,7 +137,7 @@ export type LoginMutation = (
   ) }
 );
 
-export type LogoutMutationVariables = {};
+export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type LogoutMutation = (
@@ -101,22 +145,22 @@ export type LogoutMutation = (
   & Pick<Mutation, 'logout'>
 );
 
-export type MeQueryVariables = {};
+export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type MeQuery = (
   { __typename?: 'Query' }
-  & { me: (
+  & { me?: Maybe<(
     { __typename?: 'User' }
     & Pick<User, 'username' | 'email'>
-  ) }
+  )> }
 );
 
-export type RegisterMutationVariables = {
+export type RegisterMutationVariables = Exact<{
   username: Scalars['String'];
   email: Scalars['String'];
   password: Scalars['String'];
-};
+}>;
 
 
 export type RegisterMutation = (
@@ -124,7 +168,7 @@ export type RegisterMutation = (
   & Pick<Mutation, 'register'>
 );
 
-export type UsersQueryVariables = {};
+export type UsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type UsersQuery = (
@@ -136,6 +180,38 @@ export type UsersQuery = (
 );
 
 
+export const ChatDocument = gql`
+    subscription Chat {
+  newMessage {
+    user {
+      username
+    }
+    date
+    content
+  }
+}
+    `;
+
+/**
+ * __useChatSubscription__
+ *
+ * To run a query within a React component, call `useChatSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useChatSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useChatSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useChatSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<ChatSubscription, ChatSubscriptionVariables>) {
+        return ApolloReactHooks.useSubscription<ChatSubscription, ChatSubscriptionVariables>(ChatDocument, baseOptions);
+      }
+export type ChatSubscriptionHookResult = ReturnType<typeof useChatSubscription>;
+export type ChatSubscriptionResult = ApolloReactCommon.SubscriptionResult<ChatSubscription>;
 export const HelloDocument = gql`
     query Hello {
   hello

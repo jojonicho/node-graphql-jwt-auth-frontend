@@ -1,7 +1,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import {
-  useRegisterMutation,
+  // useRegisterMutation,
   useLoginMutation,
   MeDocument,
   MeQuery,

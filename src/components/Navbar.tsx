@@ -27,7 +27,7 @@ const Nav = styled.nav`
 
 interface NavbarProps {}
 
-export const Navbar: React.FC<NavbarProps> = ({}) => {
+export const Navbar: React.FC<NavbarProps> = () => {
   const { data, loading } = useMeQuery();
   const [logout, { client }] = useLogoutMutation();
 
